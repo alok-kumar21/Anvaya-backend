@@ -1,19 +1,19 @@
 const mongoose = require("mongoose");
 
-const salesAgentSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, "Sales Agent name is required"],
+// Sales Agent Schema
+const salesAgentSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      require: true,
+    },
+    email: {
+      type: String,
+      require: true,
+      unique: true,
+    },
   },
-  email: {
-    type: String,
-    required: [true, "Sales Agent email is required"],
-    unique: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
 module.exports = mongoose.model("SalesAgent", salesAgentSchema);

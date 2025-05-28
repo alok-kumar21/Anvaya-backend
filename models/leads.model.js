@@ -4,11 +4,11 @@ const mongoose = require("mongoose");
 const leadSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, "Lead name is required"],
+    require: true,
   },
   source: {
     type: String,
-    required: [true, "Lead source is required"],
+    require: true,
     enum: [
       "Website",
       "Referral",
@@ -20,12 +20,12 @@ const leadSchema = new mongoose.Schema({
   },
   salesAgent: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "SalesAgent",
-    required: [true, "Sales Agent is required"],
+    ref: "SalesAgent", // Reference to SalesAgent model
+    require: true,
   },
   status: {
     type: String,
-    required: true,
+    require: true,
     enum: ["New", "Contacted", "Qualified", "Proposal Sent", "Closed"], // Predefined lead statuses
     default: "New",
   },
@@ -34,12 +34,12 @@ const leadSchema = new mongoose.Schema({
   },
   timeToClose: {
     type: Number,
-    // required: [true, "Time to Close is required"],
+    require: true,
     min: [1, "Time to Close must be a positive number"], // Positive integer validation
   },
   priority: {
     type: String,
-    required: true,
+    require: true,
     enum: ["High", "Medium", "Low"], // Predefined priority levels
     default: "Medium",
   },

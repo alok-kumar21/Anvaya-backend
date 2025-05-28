@@ -1,12 +1,14 @@
-const express = require("express");
 const { inilizeData } = require("./db/db.connect");
+inilizeData();
+
+const express = require("express");
 
 const Lead = require("./models/leads.model");
 const SalesAgent = require("./models/salesAgent.model");
 
 const app = express();
+app.use(express.json());
 
-inilizeData();
 require("dotenv").config();
 
 // Create a New Lead
@@ -35,9 +37,9 @@ app.post("/leads", async (req, res) => {
 
 //  get all Leads
 
-async function showAllLeads() {
+async function showAllLeads(filter) {
   try {
-    const allLeads = await Lead.find().populate("salesAgent");
+    const allLeads = await Lead.find(filter).populate("salesAgent");
     return allLeads;
   } catch (error) {
     console.log("Error:", error);
@@ -46,12 +48,62 @@ async function showAllLeads() {
 
 app.get("/leads", async (req, res) => {
   try {
-    const showLeads = await showAllLeads();
+    const leads = await showAllLeads(req.query);
 
-    if (showAllLeads) {
-      res.json(showLeads);
+    if (leads) {
+      res.json(leads);
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+// Update leads
+
+async function updateLeads(leadsId, updateToLeads) {
+  try {
+    const updatingLeads = await Lead.findByIdAndUpdate(leadsId, updateToLeads, {
+      new: true,
+    });
+    return updatingLeads;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.post("/v1/leads/:id", async (req, res) => {
+  try {
+    const updatedLeads = await updateLeads(req.params.id, req.body);
+    if (updatedLeads) {
+      res.json(updatedLeads);
     } else {
-      res.status(404).json({ error: "leads not found." });
+      res.status(404).json({ error: "failed to update leads" });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+// Delete Leads
+
+async function deleteLeads(leadsId) {
+  try {
+    const deleteingLeads = await Lead.findByIdAndDelete(leadsId);
+    return deleteingLeads;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.delete("/v2/leads/:id", async (req, res) => {
+  try {
+    const deletedLeads = await deleteLeads(req.params.id);
+    if (deletedLeads) {
+      res.status(200).json({ message: "Lead deleted successfully." });
+    } else {
+      res
+        .status(404)
+        .json({ error: `Lead with ID ${req.params.id} not found.` });
     }
   } catch (error) {
     console.log("Error:", error);
@@ -59,24 +111,48 @@ app.get("/leads", async (req, res) => {
 });
 
 // create salesAgent
-
 async function addsalesAgent(agents) {
   try {
     const addingAgent = SalesAgent(agents);
     const addedAgents = await addingAgent.save();
+
     return addedAgents;
   } catch (error) {
     console.log("Error:", error);
   }
 }
 
-app.post("/agents", async (req, res) => {
+app.post("/v1/agents", async (req, res) => {
   try {
     const saveAgents = await addsalesAgent(req.body);
     if (saveAgents) {
       res.status(201).json({ message: "Agent added successfully." });
     } else {
       res.status(404).json({ error: "failed to add Agent." });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+// Get all SalesAgents
+
+async function showAllSalesAgent() {
+  try {
+    const gettingSalesAgents = await SalesAgent.find();
+    return gettingSalesAgents;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.get("/v2/agents", async (req, res) => {
+  try {
+    const gotSalesAgents = await showAllSalesAgent();
+    if (gotSalesAgents) {
+      res.json(gotSalesAgents);
+    } else {
+      res.status(404).json({ error: "Failed to get SalesAgents." });
     }
   } catch (error) {
     console.log("Error:", error);
