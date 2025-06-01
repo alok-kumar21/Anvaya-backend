@@ -5,6 +5,7 @@ const express = require("express");
 
 const Lead = require("./models/leads.model");
 const SalesAgent = require("./models/salesAgent.model");
+const Comment = require("./models/comment.model");
 
 const app = express();
 app.use(express.json());
@@ -153,6 +154,56 @@ app.get("/v2/agents", async (req, res) => {
       res.json(gotSalesAgents);
     } else {
       res.status(404).json({ error: "Failed to get SalesAgents." });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+// add a comment to a lead
+async function addCommentLead(comments) {
+  try {
+    const addingComment = Comment(comments);
+    const savedComments = await addingComment.save();
+    return savedComments;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.post("/leads/:id/comments", async (req, res) => {
+  try {
+    const gotComments = await addCommentLead(req.body);
+    if (gotComments) {
+      res.status(201).json({ message: "comment created successfully." });
+    } else {
+      res
+        .status(404)
+        .json({ error: `Lead with ID ${req.params.id} not found.` });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+// Get all Comments
+
+async function showAllComments() {
+  try {
+    const gettingComments = await Comment.find()
+      .populate("lead")
+      .populate("author");
+    return gettingComments;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.get("/v1/leads/:id/comments", async (req, res) => {
+  try {
+    const allComments = await showAllComments();
+    if (allComments) {
+      res.json(allComments);
     }
   } catch (error) {
     console.log("Error:", error);
