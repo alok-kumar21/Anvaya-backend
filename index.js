@@ -49,10 +49,31 @@ async function showAllLeads(filter) {
 
 app.get("/leads", async (req, res) => {
   try {
-    const leads = await showAllLeads(req.query);
+    const { salesAgent, status, tags, source } = req.query;
+    const filter = {};
 
+    if (salesAgent) {
+      filter.salesAgent = salesAgent;
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (tags) {
+      filter.tags = tags;
+    }
+
+    if (source) {
+      filter.source = source;
+    }
+    const leads = await showAllLeads(filter);
     if (leads) {
-      res.json(leads);
+      res.status(200).json(leads);
+    } else {
+      res
+        .status(400)
+        .json({ error: `Invalid input:  must be one of ${filter}.` });
     }
   } catch (error) {
     console.log("Error:", error);
@@ -76,7 +97,7 @@ app.post("/v1/leads/:id", async (req, res) => {
   try {
     const updatedLeads = await updateLeads(req.params.id, req.body);
     if (updatedLeads) {
-      res.json(updatedLeads);
+      res.status(201).json(updatedLeads);
     } else {
       res.status(404).json({ error: "failed to update leads" });
     }
@@ -151,7 +172,7 @@ app.get("/v2/agents", async (req, res) => {
   try {
     const gotSalesAgents = await showAllSalesAgent();
     if (gotSalesAgents) {
-      res.json(gotSalesAgents);
+      res.status(200).json(gotSalesAgents);
     } else {
       res.status(404).json({ error: "Failed to get SalesAgents." });
     }
@@ -203,8 +224,30 @@ app.get("/v1/leads/:id/comments", async (req, res) => {
   try {
     const allComments = await showAllComments();
     if (allComments) {
-      res.json(allComments);
+      res.status(200).json(allComments);
+    } else {
+      res.status(404).json({ error: "Failed to get Comments." });
     }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+// Reporting APi
+
+async function reportingApi() {
+  try {
+    const report = await Lead.find({ status: "Closed", closedAt: lastWeek });
+    return report;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.get("report/last-week", async (req, res) => {
+  try {
+    const gettingReport = await reportingApi();
+    console.log(gettingReport);
   } catch (error) {
     console.log("Error:", error);
   }

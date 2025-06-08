@@ -52,7 +52,7 @@ const leadSchema = new mongoose.Schema({
     default: Date.now,
   },
   closedAt: {
-    type: Date, // The date when the lead was closed (optional, used when status is "Closed")
+    type: Date, 
   },
 });
 
