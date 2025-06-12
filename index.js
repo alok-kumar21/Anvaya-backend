@@ -2,7 +2,7 @@ const { inilizeData } = require("./db/db.connect");
 inilizeData();
 
 const express = require("express");
-
+const cors = require("cors");
 const Lead = require("./models/leads.model");
 const SalesAgent = require("./models/salesAgent.model");
 const Comment = require("./models/comment.model");
@@ -11,6 +11,13 @@ const app = express();
 app.use(express.json());
 
 require("dotenv").config();
+
+const corsOption = {
+  origin: "*",
+  credentials: true,
+  optionSuccessStatus: true,
+};
+app.use(cors(corsOption));
 
 // Create a New Lead
 
@@ -36,7 +43,31 @@ app.post("/leads", async (req, res) => {
   }
 });
 
-//  get all Leads
+// get all leads
+
+// async function showLeads() {
+//   try {
+//     const getLeads = await Lead.find().populate("salesAgent");
+//     return getLeads;
+//   } catch (error) {
+//     console.log("Error:", error);
+//   }
+// }
+
+// app.get("/leads", async (req, res) => {
+//   try {
+//     const alleads = await showLeads();
+//     if (alleads) {
+//       res.status(200).json(alleads);
+//     } else {
+//       res.status(404).json({ error: "failed to get leads all." });
+//     }
+//   } catch (error) {
+//     console.log("Error:", error);
+//   }
+// });
+
+//   all Leads category
 
 async function showAllLeads(filter) {
   try {
