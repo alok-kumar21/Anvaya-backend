@@ -43,30 +43,6 @@ app.post("/leads", async (req, res) => {
   }
 });
 
-// get all leads
-
-// async function showLeads() {
-//   try {
-//     const getLeads = await Lead.find().populate("salesAgent");
-//     return getLeads;
-//   } catch (error) {
-//     console.log("Error:", error);
-//   }
-// }
-
-// app.get("/leads", async (req, res) => {
-//   try {
-//     const alleads = await showLeads();
-//     if (alleads) {
-//       res.status(200).json(alleads);
-//     } else {
-//       res.status(404).json({ error: "failed to get leads all." });
-//     }
-//   } catch (error) {
-//     console.log("Error:", error);
-//   }
-// });
-
 //   all Leads category
 
 async function showAllLeads(filter) {
@@ -213,11 +189,12 @@ app.get("/v2/agents", async (req, res) => {
 });
 
 // add a comment to a lead
-async function addCommentLead(comments) {
+async function addCommentLead(leadId, comments) {
   try {
-    const addingComment = Comment(comments);
-    const savedComments = await addingComment.save();
-    return savedComments;
+    const lead = await Lead.findById(leadId);
+    const comment = new Comment({ ...comments, lead: lead._id });
+    const savedComment = await comment.save();
+    return savedComment;
   } catch (error) {
     console.log("Error:", error);
   }
@@ -225,7 +202,7 @@ async function addCommentLead(comments) {
 
 app.post("/leads/:id/comments", async (req, res) => {
   try {
-    const gotComments = await addCommentLead(req.body);
+    const gotComments = await addCommentLead(req.params.id, req.body);
     if (gotComments) {
       res.status(201).json({ message: "comment created successfully." });
     } else {
@@ -240,20 +217,22 @@ app.post("/leads/:id/comments", async (req, res) => {
 
 // Get all Comments
 
-async function showAllComments() {
+async function showAllComments(commentId) {
   try {
-    const gettingComments = await Comment.find()
+    const gettingComments = await Comment.find({ lead: commentId })
       .populate("lead")
       .populate("author");
+
     return gettingComments;
   } catch (error) {
     console.log("Error:", error);
   }
 }
 
-app.get("/v1/leads/:id/comments", async (req, res) => {
+app.get("/leads/:id/comments", async (req, res) => {
   try {
-    const allComments = await showAllComments();
+    const allComments = await showAllComments(req.params.id);
+
     if (allComments) {
       res.status(200).json(allComments);
     } else {
@@ -268,17 +247,49 @@ app.get("/v1/leads/:id/comments", async (req, res) => {
 
 async function reportingApi() {
   try {
-    const report = await Lead.find({ status: "Closed", closedAt: lastWeek });
-    return report;
+    const weekago = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const leads = await Lead.find({
+      status: "Closed",
+      updatedAt: { $gte: weekago },
+    }).populate("salesAgent");
+
+    const result = leads.map((lead) => ({
+      id: lead._id,
+      name: lead.name,
+      salesAgent: lead.salesAgent?.name,
+      closeAt: lead.updatedAt,
+    }));
+
+    return result;
   } catch (error) {
     console.log("Error:", error);
   }
 }
 
-app.get("report/last-week", async (req, res) => {
+app.get("/report/last-week", async (req, res) => {
   try {
-    const gettingReport = await reportingApi();
-    console.log(gettingReport);
+    const lastweek = await reportingApi();
+    res.status(200).json(lastweek);
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+async function totalLeadsInPipeline() {
+  try {
+    const count = await Lead.countDocuments({ status: "Closed" });
+
+    return count;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.get("/report/pipeline", async (req, res) => {
+  try {
+    const totalLeads = await totalLeadsInPipeline();
+    res.status(200).json({ totalLeadsInPipeline: totalLeads });
   } catch (error) {
     console.log("Error:", error);
   }
